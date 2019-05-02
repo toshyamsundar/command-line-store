@@ -9,6 +9,25 @@ let connection = mysql.createConnection({
   port: 3306
 });
 
+let getCustomerOrder = () => {
+  inquirer
+    .prompt([
+      {
+        type: "input",
+        message: "Enter the ID of the product that you would like to purchase: ",
+        name: "productId"
+      },
+      {
+        type: "input",
+        message: "How many units would you like to purchase?",
+        name: "productQuantity"
+      }
+    ])
+    .then(response => {
+      console.log(response.productId + " => " + response.productQuantity);
+    });
+};
+
 let getProducts = connection => {
   connection.connect(error => {
     if (error) throw error;
@@ -18,8 +37,10 @@ let getProducts = connection => {
     connection.query(getProductsQuery, (error, results) => {
       if (error) throw error;
 
-      console.log(results);
+      console.table(results);
       connection.end();
+      console.log("\n");
+      getCustomerOrder();
     });
   });
 };
