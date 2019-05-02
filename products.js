@@ -13,17 +13,37 @@ let createDBConnection = () => {
   return connection;
 };
 
-let checkProductAvailability = (productId, productQuantity) => {
+let fulfillCustomerOrder = (connection, productResults, orderedQuantity) => {
+  let updateQuery = "UPDATE products SET stock_quantity = stock_quantity - ? WHERE item_id = ?";
+
+  connection.query(updateQuery, [orderedQuantity, productResults[0].item_id], (error, results) => {
+    if (error) throw error;
+
+    console.log(`\nCongratulations!! Your order for ${productResults[0].product_name} has been completed.\n`);
+    connection.end();
+  });
+};
+
+let checkProductAvailability = (productId, orderedQuantity) => {
   let connection = createDBConnection();
   connection.connect(error => {
     if (error) throw error;
 
-    let checkProductsQuery = "SELECT * FROM products WHERE item_id = ? AND stock_quantity >= ?";
+    let checkProductQuery = "SELECT item_id, product_name, stock_quantity FROM products WHERE item_id = ?";
 
-    connection.query(checkProductsQuery, [productId, productQuantity], (error, results) => {
+    connection.query(checkProductQuery, [productId], (error, results) => {
       if (error) throw error;
-      console.table(results);
-      connection.end();
+      if (results.length === 0) {
+        console.log("\nProduct Not Available!!\n");
+        connection.end();
+      } else {
+        if (results[0].stock_quantity < orderedQuantity) {
+          console.log("\nInsufficient Quantity!!\n");
+          connection.end();
+        } else {
+          fulfillCustomerOrder(connection, results, orderedQuantity);
+        }
+      }
     });
   });
 };
@@ -38,14 +58,12 @@ let getCustomerOrder = () => {
       },
       {
         type: "input",
-        message: "How many units would you like to purchase?",
-        name: "productQuantity"
+        message: "How many units would you like to purchase? ",
+        name: "orderedQuantity"
       }
     ])
     .then(response => {
-      console.log(response.productId + " => " + response.productQuantity);
-
-      checkProductAvailability(response.productId, response.productQuantity);
+      checkProductAvailability(response.productId, response.orderedQuantity);
     });
 };
 
