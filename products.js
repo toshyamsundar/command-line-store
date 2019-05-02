@@ -20,7 +20,29 @@ let fulfillCustomerOrder = (connection, productResults, orderedQuantity) => {
     if (error) throw error;
 
     console.log(`\nCongratulations!! Your order for ${productResults[0].product_name} has been completed.\n`);
+    console.log(`\nHere is your receipt\n`);
+    let receipt = {
+      Product: productResults[0].product_name,
+      "Total Cost": "$" + productResults[0].price * orderedQuantity
+    };
+    console.table(receipt);
+    console.log("\n");
     connection.end();
+
+    inquirer
+      .prompt([
+        {
+          type: "list",
+          message: "Would you like to order more?",
+          choices: ["YES", "NO"],
+          name: "orderMore"
+        }
+      ])
+      .then(response => {
+        if (response.orderMore === "YES") {
+          getProducts();
+        }
+      });
   });
 };
 
@@ -29,7 +51,7 @@ let checkProductAvailability = (productId, orderedQuantity) => {
   connection.connect(error => {
     if (error) throw error;
 
-    let checkProductQuery = "SELECT item_id, product_name, stock_quantity FROM products WHERE item_id = ?";
+    let checkProductQuery = "SELECT item_id, product_name, stock_quantity, price FROM products WHERE item_id = ?";
 
     connection.query(checkProductQuery, [productId], (error, results) => {
       if (error) throw error;
