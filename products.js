@@ -58,10 +58,38 @@ let checkProductAvailability = (productId, orderedQuantity) => {
       if (results.length === 0) {
         console.log("\nProduct Not Available!!\n");
         connection.end();
+        inquirer
+          .prompt([
+            {
+              type: "list",
+              message: "Would you like to order another product?",
+              choices: ["YES", "NO"],
+              name: "orderMore"
+            }
+          ])
+          .then(response => {
+            if (response.orderMore === "YES") {
+              getProducts();
+            }
+          });
       } else {
         if (results[0].stock_quantity < orderedQuantity) {
           console.log("\nInsufficient Quantity!!\n");
           connection.end();
+          inquirer
+            .prompt([
+              {
+                type: "list",
+                message: "Would you like to reorder?",
+                choices: ["YES", "NO"],
+                name: "orderMore"
+              }
+            ])
+            .then(response => {
+              if (response.orderMore === "YES") {
+                getProducts();
+              }
+            });
         } else {
           fulfillCustomerOrder(connection, results, orderedQuantity);
         }
